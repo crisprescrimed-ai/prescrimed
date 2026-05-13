@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply box-border;
+  }
+  body {
+    @apply bg-gray-50 text-gray-900 font-sans antialiased;
+  }
+
+  /* Ensure media elements are responsive by default */
+  img, picture, video, svg {
+    max-width: 100%;
+    height: auto;
+    display: block;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-5 py-3 rounded-2xl font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-sm hover:shadow-lg;
+    min-height: 44px; /* Touch-friendly */
+  }
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-700 to-primary-400 text-white hover:from-primary-800 hover:to-primary-500 focus:ring-primary-400 shadow-lg shadow-primary-400/20;
+  }
+  .btn-secondary {
+    @apply bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 focus:ring-slate-300;
+  }
+  .btn-danger {
+    @apply bg-gradient-to-r from-red-600 to-red-700 text-white hover:from-red-700 hover:to-red-800 focus:ring-red-500;
+  }
+  .btn-success {
+    @apply bg-gradient-to-r from-emerald-500 to-emerald-600 text-white hover:from-emerald-600 hover:to-emerald-700 focus:ring-emerald-500;
+  }
+  .input {
+    @apply w-full px-4 py-3 border-2 border-slate-200 rounded-2xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all duration-200 text-base text-slate-800 placeholder-slate-400;
+    min-height: 44px; /* Touch-friendly */
+  }
+  .card {
+    @apply bg-white rounded-3xl shadow-lg hover:shadow-xl p-4 sm:p-6 md:p-8 transition-shadow duration-200 border border-slate-100;
+  }
+  .sidebar-item {
+    @apply flex items-center gap-3 px-4 py-3 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer;
+    min-height: 44px; /* Touch-friendly */
+  }
+  .sidebar-item-active {
+    @apply bg-primary-50 text-primary-700 font-medium;
+  }
+
+  /* Responsive utilities */
+  .container-responsive {
+    @apply w-full mx-auto px-4 sm:px-6 lg:px-8;
+    max-width: 1280px;
+  }
+
+  .grid-responsive {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6;
+  }
+
+  /* Custom Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-300 rounded-full;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-400;
+  }
+
+  /* Animations */
+  @keyframes slide-down {
+    from {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .animate-slide-down {
+    animation: slide-down 0.3s ease-out;
+  }
+}

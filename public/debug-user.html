@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug - User LocalStorage</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1B4332 0%, #2d5016 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 24px;
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #1B4332;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        .user-data {
+            background: #f8f9fa;
+            border-radius: 16px;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #e0e0e0;
+        }
+        .label {
+            font-weight: 600;
+            color: #1B4332;
+            margin-bottom: 8px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        pre {
+            background: #2d3748;
+            color: #fff;
+            padding: 16px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 5px 0;
+        }
+        .status.success { background: #d1fae5; color: #065f46; }
+        .status.error { background: #fee2e2; color: #991b1b; }
+        .status.warning { background: #fef3c7; color: #92400e; }
+        .btn {
+            background: linear-gradient(135deg, #1B4332 0%, #2d5016 100%);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .info-box {
+            background: #e0f2fe;
+            border-left: 4px solid #0284c7;
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #0c4a6e;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Debug - Dados do Usuário</h1>
+        <p class="subtitle">Diagnóstico do localStorage para SuperAdmin</p>
+
+        <div id="output"></div>
+
+        <button class="btn" onclick="location.href='/login'">← Voltar ao Login</button>
+    </div>
+
+    <script>
+        function analyzeUser() {
+            const output = document.getElementById('output');
+            let html = '';
+
+            // Verificar se há dados no localStorage
+            const userStr = localStorage.getItem('user');
+            const tokenStr = localStorage.getItem('token');
+
+            html += '<div class="info-box">📋 Analisando localStorage...</div>';
+
+            // Verificar token
+            html += '<div class="user-data">';
+            html += '<div class="label">🔑 Token JWT</div>';
+            if (tokenStr) {
+                html += `<span class="status success">✓ Token encontrado</span>`;
+                html += `<pre>${tokenStr.substring(0, 50)}...</pre>`;
+            } else {
+                html += `<span class="status error">✗ Token não encontrado</span>`;
+            }
+            html += '</div>';
+
+            // Verificar user
+            html += '<div class="user-data">';
+            html += '<div class="label">👤 Objeto User</div>';
+            if (userStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    html += `<span class="status success">✓ User encontrado</span>`;
+                    html += '<pre>' + JSON.stringify(user, null, 2) + '</pre>';
+
+                    // Verificar campos críticos
+                    html += '<div style="margin-top: 15px;">';
+                    html += '<div class="label">Verificações:</div>';
+                    
+                    if (user.role === 'superadmin') {
+                        html += `<span class="status success">✓ Role: ${user.role}</span><br>`;
+                    } else {
+                        html += `<span class="status error">✗ Role: ${user.role || 'não definido'} (deveria ser "superadmin")</span><br>`;
+                    }
+
+                    if (user.email === 'superadmin@prescrimed.com') {
+                        html += `<span class="status success">✓ Email: ${user.email}</span><br>`;
+                    } else {
+                        html += `<span class="status warning">⚠ Email: ${user.email || 'não definido'}</span><br>`;
+                    }
+
+                    if (user.permissoes && user.permissoes.length > 0) {
+                        html += `<span class="status success">✓ Permissões: ${user.permissoes.length} módulos</span><br>`;
+                        html += '<pre>' + JSON.stringify(user.permissoes, null, 2) + '</pre>';
+                    } else {
+                        html += `<span class="status error">✗ Permissões: nenhuma encontrada</span><br>`;
+                    }
+
+                    html += '</div>';
+                } catch (e) {
+                    html += `<span class="status error">✗ Erro ao parsear JSON</span>`;
+                    html += `<pre>Erro: ${e.message}</pre>`;
+                    html += `<pre>${userStr}</pre>`;
+                }
+            } else {
+                html += `<span class="status error">✗ User não encontrado no localStorage</span>`;
+                html += '<div class="info-box" style="margin-top: 15px;">💡 Faça login novamente para criar o objeto user.</div>';
+            }
+            html += '</div>';
+
+            // Diagnóstico final
+            html += '<div class="user-data">';
+            html += '<div class="label">📊 Diagnóstico</div>';
+            if (userStr && tokenStr) {
+                try {
+                    const user = JSON.parse(userStr);
+                    if (user.role === 'superadmin') {
+                        html += `<span class="status success">✓ Tudo OK! O sidebar deveria mostrar 12 itens.</span>`;
+                        html += '<div class="info-box" style="margin-top: 15px;">Se o sidebar não mostra 12 itens, recarregue a página (Ctrl+R) ou limpe o cache do navegador.</div>';
+                    } else {
+                        html += `<span class="status error">✗ Problema: Role não é "superadmin"</span>`;
+                        html += '<div class="info-box" style="margin-top: 15px;">🔧 Solução: Limpe o localStorage e faça login novamente.</div>';
+                    }
+                } catch (e) {
+                    html += `<span class="status error">✗ Problema: Dados corrompidos</span>`;
+                    html += '<div class="info-box" style="margin-top: 15px;">🔧 Solução: Limpe o localStorage (F12 > Application > Local Storage > delete all) e faça login novamente.</div>';
+                }
+            } else {
+                html += `<span class="status error">✗ Problema: Usuário não está logado</span>`;
+                html += '<div class="info-box" style="margin-top: 15px;">🔧 Solução: Faça login com superadmin@prescrimed.com / super123</div>';
+            }
+            html += '</div>';
+
+            output.innerHTML = html;
+        }
+
+        analyzeUser();
+    </script>
+</body>
+</html>

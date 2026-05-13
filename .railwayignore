@@ -1,0 +1,40 @@
+# .railwayignore para Frontend
+# Arquivos que não devem ser enviados para o Railway
+
+# Dependências
+node_modules/
+
+# Development
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.DS_Store
+
+# Ambientes locais
+.env.local
+.env.development
+.env.test
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testes
+coverage/
+.nyc_output/
+
+# Arquivos temporários
+temp/
+tmp/
+*.tmp
+
+# Git
+.git/
+.gitignore
+
+# Documentação
+*.md
+!README.md

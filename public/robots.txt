@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://prescrimed.netlify.app/sitemap.xml

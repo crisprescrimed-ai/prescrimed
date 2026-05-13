@@ -1,0 +1,8 @@
+# Preserva assets estáticos (não reescreve para index.html)
+/assets/* /assets/:splat 200
+
+# Proxy de API para backend no Railway
+/api/* https://prescrimed-backend-production.up.railway.app/api/:splat 200
+
+# SPA fallback (todas as demais rotas para index.html)
+/* /index.html 200
