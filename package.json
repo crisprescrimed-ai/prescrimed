@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "start": "node server.js",
     "test": "node --test src/services/api.config.test.js src/services/auth.helpers.test.js",
     "build:netlify": "vite build",
     "build:hostgator": "vite build --mode hostgator",
