@@ -16,12 +16,24 @@
     height: auto;
     display: block;
   }
+  /* Accessibility: visible focus for keyboard users */
+  :focus {
+    outline: none;
+  }
+  :focus-visible {
+    outline: 4px solid rgba(82,183,136,0.34); /* primary-400, stronger for visibility */
+    outline-offset: 3px;
+    box-shadow: 0 0 0 6px rgba(82,183,136,0.10);
+  }
 }
 
 @layer components {
   .btn {
     @apply px-5 py-3 rounded-2xl font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed text-base shadow-sm hover:shadow-lg;
     min-height: 44px; /* Touch-friendly */
+  }
+  .btn:focus-visible {
+    box-shadow: 0 0 0 6px rgba(82,183,136,0.12);
   }
   .btn-primary {
     @apply bg-gradient-to-r from-primary-700 to-primary-400 text-white hover:from-primary-800 hover:to-primary-500 focus:ring-primary-400 shadow-lg shadow-primary-400/20;
@@ -38,6 +50,19 @@
   .input {
     @apply w-full px-4 py-3 border-2 border-slate-200 rounded-2xl bg-white focus:outline-none focus:ring-2 focus:ring-primary-400/20 focus:border-primary-400 transition-all duration-200 text-base text-slate-800 placeholder-slate-400;
     min-height: 44px; /* Touch-friendly */
+  }
+
+  .input::placeholder {
+    color: #94a3b8; /* slightly stronger placeholder for contrast */
+    opacity: 1;
+  }
+
+  /* Hero title that scales smoothly across breakpoints */
+  .hero-title {
+    font-weight: 700;
+    line-height: 1.05;
+    /* clamp: min 1.75rem (~28px), preferred scales with viewport, max 3rem (48px) */
+    font-size: clamp(1.75rem, 1.8rem + 2.2vw, 3rem);
   }
   .card {
     @apply bg-white rounded-3xl shadow-lg hover:shadow-xl p-4 sm:p-6 md:p-8 transition-shadow duration-200 border border-slate-100;

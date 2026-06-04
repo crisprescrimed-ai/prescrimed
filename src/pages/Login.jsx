@@ -73,8 +73,8 @@ export default function Login() {
           <p className="text-primary-100">Sistema de Gestão de Prescrições</p>
         </div>
 
-        <div className="relative z-10 max-w-md">
-          <h2 className="text-4xl font-bold mb-6 leading-tight">
+          <div className="relative z-10 max-w-md">
+          <h2 className="hero-title mb-6 leading-tight">
             Simplifique a gestão de prescrições da sua clínica.
           </h2>
           <p className="text-primary-100 text-lg leading-relaxed mb-8">
@@ -128,7 +128,8 @@ export default function Login() {
                     name="email"
                     value={formData.email}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    className="input bg-slate-50 pl-10 pr-4"
+                    aria-label="Email profissional"
                     placeholder="nome@clinica.com"
                     required
                   />
@@ -149,7 +150,8 @@ export default function Login() {
                     name="senha"
                     value={formData.senha}
                     onChange={handleChange}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all"
+                    className="input bg-slate-50 pl-10 pr-4"
+                    aria-label="Senha"
                     placeholder="••••••••"
                     required
                   />
