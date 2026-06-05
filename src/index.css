@@ -8,6 +8,7 @@
   }
   body {
     @apply bg-gray-50 text-gray-900 font-sans antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
   }
 
   /* Ensure media elements are responsive by default */
@@ -60,9 +61,13 @@
   /* Hero title that scales smoothly across breakpoints */
   .hero-title {
     font-weight: 700;
-    line-height: 1.05;
-    /* clamp: min 1.75rem (~28px), preferred scales with viewport, max 3rem (48px) */
-    font-size: clamp(1.75rem, 1.8rem + 2.2vw, 3rem);
+    line-height: 1.03;
+    letter-spacing: -0.01em;
+    /* Ajuste fino: limitar o crescimento em telas largas para reduzir quebras */
+    font-size: clamp(1.9rem, 1.6rem + 1.6vw, 2.8rem);
+    max-width: 40rem; /* reduzir largura para consistência de quebra de linha */
+    margin-left: auto;
+    margin-right: auto;
   }
   .card {
     @apply bg-white rounded-3xl shadow-lg hover:shadow-xl p-4 sm:p-6 md:p-8 transition-shadow duration-200 border border-slate-100;
@@ -114,5 +119,40 @@
 
   .animate-slide-down {
     animation: slide-down 0.3s ease-out;
+  }
+
+  /* Hero panel and login wrapper adjustments for consistent spacing */
+  .hero-panel {
+    @apply p-8 lg:p-16 min-h-screen flex flex-col justify-between lg:justify-center items-center lg:items-start text-center lg:text-left lg:pl-12 text-white relative overflow-hidden bg-gradient-to-br from-primary-600 to-primary-800;
+  }
+
+  .hero-panel .hero-intro {
+    @apply mx-auto py-6 lg:py-0 lg:mx-0;
+    max-width: 36rem;
+  }
+
+  .hero-title {
+    font-weight: 700;
+    line-height: 1.06;
+    letter-spacing: -0.015em;
+    /* Ajuste fino: limitar o crescimento em telas largas para reduzir quebras */
+    font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.6rem);
+    max-width: 36rem; /* reduzir largura para consistência de quebra de linha */
+    margin: 0;
+    transform: translateY(-2px);
+    padding-right: 0.25rem;
+  }
+  
+
+  /* Ensure button contrast remains strong across backgrounds */
+  .btn-primary {
+    @apply bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-md;
+    box-shadow: 0 10px 30px rgba(2,6,23,0.08);
+    border: 1px solid rgba(255,255,255,0.04);
+  }
+
+  .hero-title {
+    color: #ffffff;
+    text-shadow: 0 6px 18px rgba(0,0,0,0.18);
   }
 }
