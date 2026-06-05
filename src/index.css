@@ -123,24 +123,27 @@
 
   /* Hero panel and login wrapper adjustments for consistent spacing */
   .hero-panel {
-    @apply p-8 lg:p-16 min-h-screen flex flex-col justify-between lg:justify-center items-center lg:items-start text-center lg:text-left lg:pl-12 text-white relative overflow-hidden bg-gradient-to-br from-primary-600 to-primary-800;
+    @apply p-8 lg:p-16 min-h-screen flex flex-col justify-between lg:justify-center items-center lg:items-start text-center lg:text-left lg:pl-12 lg:pr-12 text-white relative overflow-hidden bg-gradient-to-br from-primary-600 to-primary-800;
   }
 
   .hero-panel .hero-intro {
-    @apply mx-auto py-6 lg:py-0 lg:mx-0;
-    max-width: 36rem;
+    @apply mx-auto py-6 lg:py-0 lg:mx-0 px-4 lg:px-0;
+    max-width: 34rem;
   }
 
   .hero-title {
     font-weight: 700;
-    line-height: 1.06;
-    letter-spacing: -0.015em;
+    line-height: 1.08;
+    letter-spacing: -0.012em;
     /* Ajuste fino: limitar o crescimento em telas largas para reduzir quebras */
-    font-size: clamp(1.75rem, 1.4rem + 1.4vw, 2.6rem);
-    max-width: 36rem; /* reduzir largura para consistência de quebra de linha */
+    font-size: clamp(1.65rem, 1.25rem + 1.2vw, 2.4rem);
+    max-width: 34rem; /* reduzir largura para consistência de quebra de linha */
     margin: 0;
-    transform: translateY(-2px);
-    padding-right: 0.25rem;
+    transform: none;
+    padding-right: 0;
+    hyphens: none;
+    overflow-wrap: normal;
+    word-break: normal;
   }
   
 
@@ -149,6 +152,8 @@
     @apply bg-gradient-to-r from-primary-600 to-primary-500 text-white shadow-md;
     box-shadow: 0 10px 30px rgba(2,6,23,0.08);
     border: 1px solid rgba(255,255,255,0.04);
+    @apply px-5 py-3 text-base;
+    min-height: 44px;
   }
 
   .hero-title {
