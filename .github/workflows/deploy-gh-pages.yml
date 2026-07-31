@@ -28,6 +28,9 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build:github
+        env:
+          VITE_API_URL: ${{ vars.PRESCRIMED_API_URL }}
+          VITE_BACKEND_ROOT: ${{ vars.PRESCRIMED_BACKEND_ROOT }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

@@ -18,7 +18,7 @@ VITE_API_URL=https://api.exemplo.com/api
 VITE_BACKEND_ROOT=https://api.exemplo.com
 ```
 
-A API externa deve liberar CORS para o dominio do Pages. Sem essas variaveis, o monitor de backend fica desativado na hospedagem estatica para evitar alertas falsos.
+No repositorio GitHub, cadastre as variaveis `PRESCRIMED_API_URL` e `PRESCRIMED_BACKEND_ROOT` em **Settings > Secrets and variables > Actions > Variables**. O workflow as injeta na build de Pages. A API externa deve definir `CORS_ALLOWED_ORIGINS=https://cristiano-superacao.github.io` e um `AUTH_TOKEN_SECRET` forte. Sem essas variaveis, o monitor de backend fica desativado na hospedagem estatica para evitar alertas falsos.
 
 ## Netlify
 
@@ -43,7 +43,9 @@ npm run build
 npm start
 ```
 
-`npm start` executa `server.js`, que entrega `dist/`, expoe `/api` e responde aos health checks. Configure `PORT`, `DATABASE_URL` e, para PostgreSQL com SSL, `PGSSLMODE=require`.
+`npm start` executa `server.js`, que entrega `dist/`, expoe `/api` e responde aos health checks. Configure `PORT`, `DATABASE_URL`, `AUTH_TOKEN_SECRET`, `CORS_ALLOWED_ORIGINS` e, para PostgreSQL com SSL, `PGSSLMODE=require`. Em producao, o servidor recusa iniciar sem `AUTH_TOKEN_SECRET` ou `CORS_ALLOWED_ORIGINS`.
+
+`railway.toml` fixa `npm run build`, `npm start` e o health check `/health` para esse modelo de deploy.
 
 `npm run start:railway` usa apenas `vite preview`; ele nao inicia as rotas Express. Para uma implantacao com API integrada, o comando de inicio da plataforma deve ser `npm start`.
 

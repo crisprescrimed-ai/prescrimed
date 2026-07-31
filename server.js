@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import bcrypt from 'bcryptjs';
+import { createAuthToken, readAuthToken } from './lib/auth-token.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import {
@@ -31,8 +32,32 @@ const __dirname = path.dirname(__filename);
 const port = process.env.PORT || 3000;
 const distDir = path.resolve(__dirname, 'dist');
 const app = express();
+const authTokenSecret = process.env.AUTH_TOKEN_SECRET || 'local-development-secret';
+const authTokenLifetime = Number.parseInt(process.env.AUTH_TOKEN_TTL_SECONDS || '28800', 10);
+const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
 
-app.use(cors());
+if (process.env.NODE_ENV === 'production' && !process.env.AUTH_TOKEN_SECRET) {
+  throw new Error('AUTH_TOKEN_SECRET e obrigatoria em producao.');
+}
+
+if (process.env.NODE_ENV === 'production' && allowedOrigins.length === 0) {
+  throw new Error('CORS_ALLOWED_ORIGINS e obrigatoria em producao.');
+}
+
+app.use(cors({
+  origin(origin, callback) {
+    const allowAllDevelopmentOrigins = process.env.NODE_ENV !== 'production' && allowedOrigins.length === 0;
+    if (!origin || allowAllDevelopmentOrigins || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error('Origem nao permitida pelo CORS.'));
+  },
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -55,8 +80,39 @@ const comparePassword = (password, storedPassword) => {
   return candidate === storedPassword;
 };
 
+const toUserProfile = (user) => ({
+  id: user.id,
+  nome: user.nome,
+  email: user.email,
+  role: user.role,
+  empresaId: user.empresaId,
+  permissoes: user.permissoes || [],
+});
+
+const requireAuth = async (req, res, next) => {
+  const authorization = req.get('authorization') || '';
+  const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+  const payload = readAuthToken({ token, secret: authTokenSecret });
+
+  if (!payload) {
+    return respondError(res, 401, 'Sessao invalida ou expirada', null);
+  }
+
+  try {
+    const user = await Usuario.findByPk(payload.sub);
+    if (!user || !user.ativo) {
+      return respondError(res, 401, 'Usuario nao encontrado ou inativo', null);
+    }
+
+    req.user = user;
+    return next();
+  } catch (error) {
+    return respondError(res, 500, 'Erro ao validar sessao', error.message);
+  }
+};
+
 const registerCrudRoutes = (resourcePath, model) => {
-  app.get(`/api/${resourcePath}`, async (_req, res) => {
+  app.get(`/api/${resourcePath}`, requireAuth, async (_req, res) => {
     try {
       const rows = await model.findAll({ order: [['createdAt', 'DESC']] });
       res.json(rows);
@@ -65,7 +121,7 @@ const registerCrudRoutes = (resourcePath, model) => {
     }
   });
 
-  app.get(`/api/${resourcePath}/:id`, async (req, res) => {
+  app.get(`/api/${resourcePath}/:id`, requireAuth, async (req, res) => {
     try {
       const row = await model.findByPk(req.params.id);
       if (!row) return respondError(res, 404, 'Registro não encontrado', null);
@@ -75,7 +131,7 @@ const registerCrudRoutes = (resourcePath, model) => {
     }
   });
 
-  app.post(`/api/${resourcePath}`, async (req, res) => {
+  app.post(`/api/${resourcePath}`, requireAuth, async (req, res) => {
     try {
       const row = await model.create(req.body);
       res.status(201).json(row);
@@ -84,7 +140,7 @@ const registerCrudRoutes = (resourcePath, model) => {
     }
   });
 
-  app.put(`/api/${resourcePath}/:id`, async (req, res) => {
+  app.put(`/api/${resourcePath}/:id`, requireAuth, async (req, res) => {
     try {
       const row = await model.findByPk(req.params.id);
       if (!row) return respondError(res, 404, 'Registro não encontrado', null);
@@ -95,7 +151,7 @@ const registerCrudRoutes = (resourcePath, model) => {
     }
   });
 
-  app.delete(`/api/${resourcePath}/:id`, async (req, res) => {
+  app.delete(`/api/${resourcePath}/:id`, requireAuth, async (req, res) => {
     try {
       const row = await model.findByPk(req.params.id);
       if (!row) return respondError(res, 404, 'Registro não encontrado', null);
@@ -136,17 +192,20 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     res.json({
-      user: {
-        id: user.id,
-        nome: user.nome,
-        email: user.email,
-        role: user.role,
-      },
-      token: 'local-dev-token',
+      user: toUserProfile(user),
+      token: createAuthToken({
+        userId: user.id,
+        secret: authTokenSecret,
+        expiresInSeconds: authTokenLifetime,
+      }),
     });
   } catch (error) {
     respondError(res, 500, 'Erro ao autenticar', error.message);
   }
+});
+
+app.get('/api/auth/me', requireAuth, (req, res) => {
+  res.json(toUserProfile(req.user));
 });
 
 app.post('/api/auth/register', async (req, res) => {
@@ -171,7 +230,7 @@ app.post('/api/auth/register', async (req, res) => {
   }
 });
 
-app.get('/api/empresas/me', async (_req, res) => {
+app.get('/api/empresas/me', requireAuth, async (_req, res) => {
   try {
     const empresa = await Empresa.findOne({ order: [['createdAt', 'ASC']] });
     if (!empresa) return respondError(res, 404, 'Nenhuma empresa cadastrada', null);
