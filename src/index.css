@@ -123,7 +123,19 @@
 
   /* Hero panel and login wrapper adjustments for consistent spacing */
   .hero-panel {
-    @apply p-8 lg:p-16 min-h-screen flex flex-col justify-between lg:justify-center items-center lg:items-start text-center lg:text-left lg:pl-12 lg:pr-12 text-white relative overflow-hidden bg-gradient-to-br from-primary-600 to-primary-800;
+    @apply p-8 lg:p-16 min-h-screen flex flex-col justify-center items-center lg:items-start text-center lg:text-left lg:pl-12 lg:pr-12 text-white relative overflow-hidden bg-gradient-to-br from-primary-600 to-primary-800;
+  }
+
+  .hero-brand {
+    position: absolute;
+    top: 4rem;
+    left: 3rem;
+  }
+
+  .hero-footer {
+    position: absolute;
+    bottom: 4rem;
+    left: 3rem;
   }
 
   .hero-panel .hero-intro {

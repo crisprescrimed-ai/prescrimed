@@ -63,7 +63,7 @@ export default function Login() {
       <div className="hidden lg:flex lg:w-1/2 hero-panel">
         <HeroBackground />
 
-        <div className="relative z-10 flex flex-col items-center lg:items-start lg:text-left">
+        <div className="hero-brand z-10 flex flex-col items-center lg:items-start lg:text-left">
           <div className="flex items-center gap-3 text-2xl font-bold mb-2">
             <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <Building2 size={24} />
@@ -95,7 +95,7 @@ export default function Login() {
           </div>
         </div>
 
-        <div className="relative z-10 text-sm text-primary-200 lg:self-start lg:text-left">
+        <div className="hero-footer z-10 text-sm text-primary-200 lg:text-left">
           © 2025 Prescrimed System. Todos os direitos reservados.
         </div>
       </div>
@@ -103,7 +103,7 @@ export default function Login() {
       {/* Right Side - Login Form */}
       <div className="login-wrapper lg:items-center">
         <div className="login-card">
-          <div className="text-center lg:text-left lg:mt-8">
+          <div className="text-center lg:text-left">
             <div className="lg:hidden flex justify-center mb-6">
               <div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center text-white">
                 <Building2 size={24} />
