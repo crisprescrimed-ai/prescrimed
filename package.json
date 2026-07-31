@@ -9,6 +9,8 @@
     "preview": "vite preview",
     "start": "node server.js",
     "dev:api": "node server.js",
+    "seed:validation": "node scripts/seed-validation-data.js --reset",
+    "smoke:api": "node scripts/smoke-validation-api.js",
     "test": "node --test lib/auth-token.test.js src/services/api.config.test.js src/services/auth.helpers.test.js",
     "build:github": "vite build --mode github",
     "build:railway": "vite build --mode railway",

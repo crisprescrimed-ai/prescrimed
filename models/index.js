@@ -55,6 +55,7 @@ const Usuario = sequelize.define('Usuario', buildAttrs({
   email: { type: DataTypes.STRING },
   senha: { type: DataTypes.STRING },
   role: { type: DataTypes.STRING },
+  permissoes: { type: DataTypes.JSON, defaultValue: [] },
   contato: { type: DataTypes.STRING },
   empresaId: { type: DataTypes.UUID, allowNull: true },
   especialidade: { type: DataTypes.STRING },
@@ -70,6 +71,7 @@ const Paciente = sequelize.define('Paciente', buildAttrs({
   telefone: { type: DataTypes.STRING },
   email: { type: DataTypes.STRING },
   endereco: { type: DataTypes.STRING },
+  status: { type: DataTypes.STRING, defaultValue: 'ativo' },
   empresaId: { type: DataTypes.UUID },
   observacoes: { type: DataTypes.TEXT },
 }), { tableName: 'pacientes' });
