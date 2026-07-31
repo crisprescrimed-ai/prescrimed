@@ -23,7 +23,7 @@ import {
   Prescricao,
   EmpresaSequencia,
 } from '../models/index.js';
-import { isValidCPF, isValidCNPJ } from '../utils/brDocuments.js';
+import { isValidCPF, isValidCNPJ } from '../src/utils/locale.js';
 
 const PASSWORD_DEFAULT = process.env.SEED_TEST_PASSWORD || 'Teste@2026';
 const DRY_RUN = String(process.env.DRY_RUN || '').toLowerCase() === 'true';

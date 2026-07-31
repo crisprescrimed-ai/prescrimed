@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AlertCircle, WifiOff } from 'lucide-react';
 import { getApiRootUrl } from '../services/api';
+import { shouldMonitorBackend } from '../services/api.config';
 import { getSupabaseConfigStatus } from '../lib/supabase';
 
 export default function BackendStatusMonitor() {
@@ -9,8 +10,16 @@ export default function BackendStatusMonitor() {
   const [lastCheck, setLastCheck] = useState(null);
   const [dbStatus, setDbStatus] = useState(null);
   const [supabaseStatus] = useState(() => getSupabaseConfigStatus());
+  const monitorBackend = shouldMonitorBackend({
+    isDevelopment: import.meta.env.DEV,
+    explicitApiUrl: import.meta.env.VITE_API_URL,
+    explicitBackendRoot: import.meta.env.VITE_BACKEND_ROOT,
+    healthCheckEnabled: import.meta.env.VITE_ENABLE_BACKEND_HEALTHCHECK === 'true',
+  });
 
   useEffect(() => {
+    if (!monitorBackend) return undefined;
+
     const evaluateHealthResponse = async (response) => {
       // offline: erro de rede ou CORS (tratado no catch)
       // degraded: backend respondeu, mas DB não conectou ainda ou retornou 503
@@ -71,7 +80,6 @@ export default function BackendStatusMonitor() {
     const checkBackendStatus = async () => {
       try {
         const healthUrlRoot = getApiRootUrl();
-
         const tryFetchHealth = async (url, options = {}) => {
           try {
             const response = await fetch(url, {
@@ -225,9 +233,9 @@ export default function BackendStatusMonitor() {
     const interval = setInterval(checkBackendStatus, 30000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [monitorBackend]);
 
-  if (!showAlert) return null;
+  if (!monitorBackend || !showAlert) return null;
 
   const isOffline = status === 'offline';
   const isDegraded = status === 'degraded';
@@ -252,10 +260,10 @@ export default function BackendStatusMonitor() {
   const barSubClass = isOffline ? 'bg-red-700' : 'bg-amber-600';
 
   return (
-    <div className="fixed top-4 left-4 right-4 lg:left-auto lg:right-4 z-50 animate-slide-down pointer-events-auto">
+    <div className="fixed top-4 left-4 right-4 sm:left-auto sm:w-[min(28rem,calc(100vw-2rem))] z-50 animate-slide-down pointer-events-auto">
       <div className={`${barClass} text-white px-4 py-3 shadow-lg rounded-md`}>
-        <div className="max-w-full lg:max-w-md mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-full mx-auto flex items-start justify-between gap-3">
+          <div className="flex min-w-0 items-start gap-3">
             {isOffline ? (
               <WifiOff className="w-5 h-5 animate-pulse" />
             ) : (
@@ -277,7 +285,7 @@ export default function BackendStatusMonitor() {
             </div>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex shrink-0 items-center gap-3">
             {testUrl ? (
               <a
                 href={testUrl}

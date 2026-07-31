@@ -1,41 +1,40 @@
 export default function HeroBackground() {
-  const photoUrl = import.meta.env.VITE_BG_IMAGE_URL || 'https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-4.0.3&auto=format&fit=crop&w=2070&q=80';
+  // Para manter consistência visual entre ambientes e evitar diferenças
+  // causadas por imagens externas, usamos overlays CSS sutis em vez de
+  // carregar fotos/patterns por padrão. Se quiser uma imagem custom, defina
+  // `VITE_BG_IMAGE_URL` no ambiente e altere a renderização aqui.
 
-  // Construir URL do pattern de forma segura:
-  // - Em dev `import.meta.env.BASE_URL` costuma ser '/' (não é um base absoluto),
-  //   o que causa `new URL(..., base)` a lançar "Invalid base URL".
-  // - Quando executado no navegador, usamos `window.location.origin` + BASE_URL
-  //   para formar uma base absoluta. Em ambientes sem `window`, usamos caminho relativo.
-  let patternUrl;
-  try {
-    if (typeof window !== 'undefined') {
-      const base = import.meta.env.BASE_URL || '/';
-      const origin = window.location.origin;
-      patternUrl = new URL('pattern.svg', origin + base).href;
-    } else {
-      patternUrl = '/pattern.svg';
-    }
-  } catch (err) {
-    // Fallback seguro para qualquer ambiente
-    patternUrl = '/pattern.svg';
-  }
+  const useExternal = Boolean(import.meta.env.VITE_BG_IMAGE_URL);
 
   return (
     <>
-      {/* Padrão leve para textura - usa BASE_URL para caminhos corretos em produção */}
+      {/* Subtle radial/linear overlays to add depth without external assets */}
       <div
-        className="absolute inset-0 opacity-20 bg-cover bg-center mix-blend-overlay"
-        style={{ backgroundImage: `url('${patternUrl}')` }}
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            'radial-gradient(ellipse at 10% 10%, rgba(255,255,255,0.03), transparent 20%), radial-gradient(ellipse at 90% 90%, rgba(0,0,0,0.04), transparent 30%)',
+          mixBlendMode: 'overlay',
+          opacity: 0.9,
+        }}
         aria-hidden="true"
       />
-      {/* Foto opcional (pode ser substituída via VITE_BG_IMAGE_URL) */}
+
+      {/* Gentle top gradient for depth */}
       <div
-        className="absolute inset-0 opacity-10 bg-cover bg-center mix-blend-overlay"
-        style={{ backgroundImage: `url('${photoUrl}')` }}
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.06), transparent 35%)' }}
         aria-hidden="true"
       />
-      {/* Gradiente superior para profundidade */}
-      <div className="absolute inset-0 bg-gradient-to-t from-primary-900/50 to-transparent" aria-hidden="true" />
+
+      {/* If explicitly requested via env var, fall back to external photo */}
+      {useExternal && (
+        <div
+          className="absolute inset-0 opacity-8 bg-cover bg-center"
+          style={{ backgroundImage: `url('${import.meta.env.VITE_BG_IMAGE_URL}')` }}
+          aria-hidden="true"
+        />
+      )}
     </>
   );
 }

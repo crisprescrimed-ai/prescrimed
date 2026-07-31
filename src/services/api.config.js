@@ -5,49 +5,33 @@ export const getRootFromApiUrl = (apiUrl) => {
 
 export const isRelativeApiUrl = (apiUrl) => Boolean(apiUrl) && apiUrl.startsWith('/');
 
-export const resolveApiUrl = ({ hostname = '', isProduction = false, explicitApiUrl = '' } = {}) => {
+export const resolveApiUrl = ({ explicitApiUrl = '' } = {}) => {
   const trimmedApiUrl = explicitApiUrl?.trim?.() || '';
-  const isRailwayHost = hostname.includes('railway.app');
-
-  if (isProduction && trimmedApiUrl) {
-    return trimmedApiUrl;
-  }
-
-  if (isRailwayHost && isProduction) {
-    return '/api';
-  }
-
-  if (isProduction) {
-    return '/api';
-  }
-
-  return trimmedApiUrl || 'http://localhost:8000/api';
+  return trimmedApiUrl || '/api';
 };
 
-export const resolveApiRootUrl = ({ hostname = '', isProduction = false, explicitApiUrl = '', explicitBackendRoot = '' } = {}) => {
+export const resolveApiRootUrl = ({ explicitApiUrl = '', explicitBackendRoot = '' } = {}) => {
   const trimmedApiUrl = explicitApiUrl?.trim?.() || '';
   const trimmedBackendRoot = explicitBackendRoot?.trim?.() || '';
-  const isRailwayHost = hostname.includes('railway.app');
 
-  if (trimmedApiUrl && isRelativeApiUrl(trimmedApiUrl)) {
-    return '';
-  }
+  if (trimmedApiUrl && isRelativeApiUrl(trimmedApiUrl)) return '';
+  if (trimmedBackendRoot) return trimmedBackendRoot;
+  if (trimmedApiUrl) return getRootFromApiUrl(trimmedApiUrl);
 
-  if (isProduction && trimmedBackendRoot) {
-    return trimmedBackendRoot;
-  }
+  return '';
+};
 
-  if (isProduction && trimmedApiUrl) {
-    return getRootFromApiUrl(trimmedApiUrl);
-  }
+export const shouldMonitorBackend = ({
+  isDevelopment = false,
+  explicitApiUrl = '',
+  explicitBackendRoot = '',
+  healthCheckEnabled = false,
+} = {}) => {
+  if (isDevelopment) return true;
 
-  if (isRailwayHost && isProduction) {
-    return '';
-  }
-
-  if (isProduction) {
-    return '';
-  }
-
-  return trimmedBackendRoot || getRootFromApiUrl(trimmedApiUrl) || 'http://localhost:8000';
+  return Boolean(
+    explicitBackendRoot?.trim?.()
+    || !isRelativeApiUrl(explicitApiUrl?.trim?.() || '')
+    || healthCheckEnabled
+  );
 };

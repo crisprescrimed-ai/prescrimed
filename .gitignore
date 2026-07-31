@@ -10,6 +10,11 @@ node_modules
 /build
 /dist
 
+# Local runtime and visual-comparison artifacts
+/tmp/
+/tmp_visual/
+/tmp_visual_compare/
+
 # Misc
 .DS_Store
 .env

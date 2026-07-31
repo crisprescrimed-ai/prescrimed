@@ -60,10 +60,10 @@ export default function Login() {
   return (
     <div className="min-h-screen flex bg-white">
       {/* Left Side - Hero/Branding (Hidden on mobile) */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-primary-600 to-primary-800 relative overflow-hidden text-white p-12 flex-col justify-between items-center text-center">
+      <div className="hidden lg:flex lg:w-1/2 hero-panel">
         <HeroBackground />
-        
-        <div className="relative z-10 flex flex-col items-center">
+
+        <div className="relative z-10 flex flex-col items-center lg:items-start lg:text-left">
           <div className="flex items-center gap-3 text-2xl font-bold mb-2">
             <div className="w-10 h-10 bg-white/20 backdrop-blur-sm rounded-lg flex items-center justify-center">
               <Building2 size={24} />
@@ -73,14 +73,14 @@ export default function Login() {
           <p className="text-primary-100">Sistema de Gestão de Prescrições</p>
         </div>
 
-          <div className="relative z-10 max-w-md">
-          <h2 className="hero-title mb-6 leading-tight">
+        <div className="relative z-10 hero-intro">
+          <h2 className="hero-title mb-4 leading-tight">
             Simplifique a gestão de prescrições da sua clínica.
           </h2>
-          <p className="text-primary-100 text-lg leading-relaxed mb-8">
+          <p className="text-primary-100 text-lg leading-relaxed mb-6">
             Segurança, agilidade e conformidade em um único lugar. Desenvolvido especialmente para Instituições de Longa Permanência e Clínicas.
           </p>
-          <div className="flex gap-4 justify-center">
+          <div className="flex gap-4 justify-center lg:justify-start">
             <div className="flex -space-x-4">
               {[1, 2, 3, 4].map((i) => (
                 <div key={i} className="w-10 h-10 rounded-full border-2 border-primary-700 bg-primary-800 flex items-center justify-center text-xs font-bold">
@@ -95,15 +95,15 @@ export default function Login() {
           </div>
         </div>
 
-        <div className="relative z-10 text-sm text-primary-200">
+        <div className="relative z-10 text-sm text-primary-200 lg:self-start lg:text-left">
           © 2025 Prescrimed System. Todos os direitos reservados.
         </div>
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 md:p-12 bg-slate-50">
-        <div className="w-full max-w-md space-y-8">
-          <div className="text-center lg:text-left">
+      <div className="login-wrapper lg:items-center">
+        <div className="login-card">
+          <div className="text-center lg:text-left lg:mt-8">
             <div className="lg:hidden flex justify-center mb-6">
               <div className="w-12 h-12 bg-primary-600 rounded-xl flex items-center justify-center text-white">
                 <Building2 size={24} />
@@ -115,7 +115,7 @@ export default function Login() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6 bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1.5">Email Profissional</label>
@@ -162,7 +162,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3.5 rounded-xl transition-all duration-200 flex items-center justify-center gap-2 shadow-lg shadow-primary-600/20 hover:shadow-primary-600/30 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="btn btn-primary w-full flex items-center justify-center gap-2"
             >
               {loading ? (
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
