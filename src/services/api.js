@@ -64,6 +64,7 @@ api.interceptors.request.use(
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      config.headers['X-Prescrimed-Token'] = token;
     }
 
     // Contexto opcional de empresa para superadmin

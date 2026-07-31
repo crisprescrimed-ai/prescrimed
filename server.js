@@ -91,7 +91,9 @@ const toUserProfile = (user) => ({
 
 const requireAuth = async (req, res, next) => {
   const authorization = req.get('authorization') || '';
-  const token = authorization.startsWith('Bearer ') ? authorization.slice(7) : '';
+  const token = authorization.startsWith('Bearer ')
+    ? authorization.slice(7)
+    : req.get('x-prescrimed-token') || '';
   const payload = readAuthToken({ token, secret: authTokenSecret });
 
   if (!payload) {
