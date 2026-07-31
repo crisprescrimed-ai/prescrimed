@@ -121,14 +121,21 @@ const requirePermission = (permission) => (req, res, next) => {
   return respondError(res, 403, 'Usuario sem permissao para este modulo', null);
 };
 
+const requireRole = (roles) => (req, res, next) => {
+  if (roles.includes(req.user.role)) return next();
+  return respondError(res, 403, 'Apenas administradores podem acessar este modulo', null);
+};
+
 const getModelScope = (model, req) => {
   if (model.rawAttributes.empresaId) return getEmpresaScope(req);
   if (model === Empresa && req.user.role !== 'superadmin') return { id: req.user.empresaId };
   return {};
 };
 
-const registerCrudRoutes = (resourcePath, model, permission) => {
-  app.get(`/api/${resourcePath}`, requireAuth, requirePermission(permission), async (req, res) => {
+const registerCrudRoutes = (resourcePath, model, permission, allowedRoles) => {
+  const roleGuard = allowedRoles ? requireRole(allowedRoles) : (_req, _res, next) => next();
+
+  app.get(`/api/${resourcePath}`, requireAuth, roleGuard, requirePermission(permission), async (req, res) => {
     try {
       const rows = await model.findAll({ where: getModelScope(model, req), order: [['createdAt', 'DESC']] });
       res.json(rows);
@@ -137,7 +144,7 @@ const registerCrudRoutes = (resourcePath, model, permission) => {
     }
   });
 
-  app.get(`/api/${resourcePath}/:id`, requireAuth, requirePermission(permission), async (req, res) => {
+  app.get(`/api/${resourcePath}/:id`, requireAuth, roleGuard, requirePermission(permission), async (req, res) => {
     try {
       const row = await model.findOne({ where: { id: req.params.id, ...getModelScope(model, req) } });
       if (!row) return respondError(res, 404, 'Registro não encontrado', null);
@@ -147,7 +154,7 @@ const registerCrudRoutes = (resourcePath, model, permission) => {
     }
   });
 
-  app.post(`/api/${resourcePath}`, requireAuth, requirePermission(permission), async (req, res) => {
+  app.post(`/api/${resourcePath}`, requireAuth, roleGuard, requirePermission(permission), async (req, res) => {
     try {
       const tenantValues = model.rawAttributes.empresaId && req.user.role !== 'superadmin'
         ? { empresaId: req.user.empresaId }
@@ -159,7 +166,7 @@ const registerCrudRoutes = (resourcePath, model, permission) => {
     }
   });
 
-  app.put(`/api/${resourcePath}/:id`, requireAuth, requirePermission(permission), async (req, res) => {
+  app.put(`/api/${resourcePath}/:id`, requireAuth, roleGuard, requirePermission(permission), async (req, res) => {
     try {
       const row = await model.findOne({ where: { id: req.params.id, ...getModelScope(model, req) } });
       if (!row) return respondError(res, 404, 'Registro não encontrado', null);
@@ -173,7 +180,7 @@ const registerCrudRoutes = (resourcePath, model, permission) => {
     }
   });
 
-  app.delete(`/api/${resourcePath}/:id`, requireAuth, requirePermission(permission), async (req, res) => {
+  app.delete(`/api/${resourcePath}/:id`, requireAuth, roleGuard, requirePermission(permission), async (req, res) => {
     try {
       const row = await model.findOne({ where: { id: req.params.id, ...getModelScope(model, req) } });
       if (!row) return respondError(res, 404, 'Registro não encontrado', null);
@@ -196,13 +203,14 @@ const sumValues = (rows) => rows.reduce((total, row) => total + Number(row.valor
 app.get('/api/dashboard/stats', requireAuth, async (req, res) => {
   try {
     const scope = getEmpresaScope(req);
+    const canViewFinancialData = ['admin', 'superadmin'].includes(req.user.role);
     const [totalPacientes, totalPrescricoes, totalUsuarios, leitos, estoque, financeiro, agendamentos] = await Promise.all([
       Paciente.count({ where: scope }),
       Prescricao.count({ where: scope }),
       Usuario.count({ where: req.user.role === 'superadmin' ? {} : { empresaId: req.user.empresaId, ativo: true } }),
       CasaRepousoLeito.findAll({ where: scope }),
       EstoqueItem.findAll({ where: scope }),
-      FinanceiroTransacao.findAll({ where: scope }),
+      canViewFinancialData ? FinanceiroTransacao.findAll({ where: scope }) : Promise.resolve([]),
       Agendamento.findAll({ where: scope }),
     ]);
     const today = new Date().toISOString().slice(0, 10);
@@ -225,7 +233,9 @@ app.get('/api/dashboard/stats', requireAuth, async (req, res) => {
       agendamentosHoje: agendamentos.filter((item) => item.dataHora?.toISOString().slice(0, 10) === today).length,
       leitos: { total: leitos.length, ocupados: leitos.filter((item) => item.status === 'ocupado').length, disponiveis: leitos.filter((item) => item.status === 'disponivel').length },
       estoque: { total: estoque.length, abaixoMinimo: estoque.filter((item) => Number(item.quantidade) <= Number(item.quantidadeMinima)).length },
-      financeiro: { receitasPagas, despesasPagas, receitasPendentes, despesasPendentes, saldo: receitasPagas - despesasPagas },
+      financeiro: canViewFinancialData
+        ? { receitasPagas, despesasPagas, receitasPendentes, despesasPendentes, saldo: receitasPagas - despesasPagas }
+        : null,
       graficoPrescricoes: chart,
     });
   } catch (error) {
@@ -256,8 +266,9 @@ app.get('/api/dashboard/pacientes-recentes', requireAuth, async (req, res) => {
 app.get('/api/dashboard/next-steps', requireAuth, async (req, res) => {
   try {
     const scope = getEmpresaScope(req);
+    const canViewFinancialData = ['admin', 'superadmin'].includes(req.user.role);
     const [pendingPayments, stock] = await Promise.all([
-      FinanceiroTransacao.count({ where: { ...scope, status: 'pendente' } }),
+      canViewFinancialData ? FinanceiroTransacao.count({ where: { ...scope, status: 'pendente' } }) : Promise.resolve(0),
       EstoqueItem.findAll({ where: scope }),
     ]);
     const lowStock = stock.filter((item) => Number(item.quantidade) <= Number(item.quantidadeMinima)).length;
@@ -279,7 +290,7 @@ app.get('/api/dashboard/alerts', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/comercial/overview', requireAuth, async (req, res) => {
+app.get('/api/comercial/overview', requireAuth, requireRole(['admin', 'superadmin']), async (req, res) => {
   try {
     const scope = getEmpresaScope(req);
     const [catalogo, pedidos, notas] = await Promise.all([
@@ -309,7 +320,7 @@ app.get('/api/comercial/overview', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/comercial/catalogo', requireAuth, async (req, res) => {
+app.get('/api/comercial/catalogo', requireAuth, requireRole(['admin', 'superadmin']), async (req, res) => {
   try {
     const where = { ...getEmpresaScope(req) };
     if (req.query.ativo !== undefined) where.ativo = req.query.ativo === 'true';
@@ -319,7 +330,7 @@ app.get('/api/comercial/catalogo', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/comercial/catalogo', requireAuth, async (req, res) => {
+app.post('/api/comercial/catalogo', requireAuth, requireRole(['admin', 'superadmin']), async (req, res) => {
   try {
     const item = await CatalogoItem.create({ ...req.body, ...getEmpresaScope(req) });
     res.status(201).json(item);
@@ -328,7 +339,7 @@ app.post('/api/comercial/catalogo', requireAuth, async (req, res) => {
   }
 });
 
-app.put('/api/comercial/catalogo/:id', requireAuth, async (req, res) => {
+app.put('/api/comercial/catalogo/:id', requireAuth, requireRole(['admin', 'superadmin']), async (req, res) => {
   try {
     const item = await CatalogoItem.findOne({ where: { id: req.params.id, ...getEmpresaScope(req) } });
     if (!item) return respondError(res, 404, 'Item de catalogo nao encontrado', null);
@@ -339,7 +350,7 @@ app.put('/api/comercial/catalogo/:id', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/comercial/pedidos', requireAuth, async (req, res) => {
+app.get('/api/comercial/pedidos', requireAuth, requireRole(['admin', 'superadmin']), async (req, res) => {
   try {
     res.json(await Pedido.findAll({ where: getEmpresaScope(req), order: [['createdAt', 'DESC']] }));
   } catch (error) {
@@ -347,7 +358,7 @@ app.get('/api/comercial/pedidos', requireAuth, async (req, res) => {
   }
 });
 
-app.get('/api/comercial/notas', requireAuth, async (req, res) => {
+app.get('/api/comercial/notas', requireAuth, requireRole(['admin', 'superadmin']), async (req, res) => {
   try {
     res.json(await NotaFiscal.findAll({ where: getEmpresaScope(req), order: [['createdAt', 'DESC']] }));
   } catch (error) {
@@ -362,7 +373,7 @@ const resolveEmpresaId = async (req) => {
   return company?.id || null;
 };
 
-app.post('/api/comercial/pedidos', requireAuth, async (req, res) => {
+app.post('/api/comercial/pedidos', requireAuth, requireRole(['admin', 'superadmin']), async (req, res) => {
   try {
     const empresaId = await resolveEmpresaId(req);
     if (!empresaId) return respondError(res, 400, 'Empresa obrigatoria para criar pedido', null);
@@ -420,7 +431,7 @@ app.post('/api/comercial/pedidos', requireAuth, async (req, res) => {
   }
 });
 
-app.put('/api/comercial/pedidos/:id/status', requireAuth, async (req, res) => {
+app.put('/api/comercial/pedidos/:id/status', requireAuth, requireRole(['admin', 'superadmin']), async (req, res) => {
   try {
     const order = await Pedido.findOne({ where: { id: req.params.id, ...getEmpresaScope(req) } });
     if (!order) return respondError(res, 404, 'Pedido nao encontrado', null);
@@ -431,7 +442,7 @@ app.put('/api/comercial/pedidos/:id/status', requireAuth, async (req, res) => {
   }
 });
 
-app.post('/api/comercial/pedidos/:id/pagamentos', requireAuth, async (req, res) => {
+app.post('/api/comercial/pedidos/:id/pagamentos', requireAuth, requireRole(['admin', 'superadmin']), async (req, res) => {
   try {
     const order = await Pedido.findOne({ where: { id: req.params.id, ...getEmpresaScope(req) } });
     if (!order) return respondError(res, 404, 'Pedido nao encontrado', null);
@@ -458,7 +469,7 @@ app.post('/api/comercial/pedidos/:id/pagamentos', requireAuth, async (req, res) 
   }
 });
 
-app.post('/api/comercial/pedidos/:id/nota-fiscal', requireAuth, async (req, res) => {
+app.post('/api/comercial/pedidos/:id/nota-fiscal', requireAuth, requireRole(['admin', 'superadmin']), async (req, res) => {
   try {
     const order = await Pedido.findOne({ where: { id: req.params.id, ...getEmpresaScope(req) } });
     if (!order) return respondError(res, 404, 'Pedido nao encontrado', null);
@@ -641,13 +652,13 @@ registerCrudRoutes('casa-repouso-leitos', CasaRepousoLeito, 'pacientes');
 registerCrudRoutes('pets', Pet, 'comercial');
 registerCrudRoutes('estoque-itens', EstoqueItem, 'estoque');
 registerCrudRoutes('estoque-movimentacoes', EstoqueMovimentacao, 'estoque');
-registerCrudRoutes('financeiro-transacoes', FinanceiroTransacao, 'financeiro');
-registerCrudRoutes('catalogo-items', CatalogoItem, 'comercial');
-registerCrudRoutes('pedidos', Pedido, 'comercial');
-registerCrudRoutes('pedido-items', PedidoItem, 'comercial');
-registerCrudRoutes('pagamentos', Pagamento, 'comercial');
-registerCrudRoutes('nota-fiscal', NotaFiscal, 'comercial');
-registerCrudRoutes('nota-fiscal-logs', NotaFiscalLog, 'comercial');
+registerCrudRoutes('financeiro-transacoes', FinanceiroTransacao, 'financeiro', ['admin', 'superadmin']);
+registerCrudRoutes('catalogo-items', CatalogoItem, 'comercial', ['admin', 'superadmin']);
+registerCrudRoutes('pedidos', Pedido, 'comercial', ['admin', 'superadmin']);
+registerCrudRoutes('pedido-items', PedidoItem, 'comercial', ['admin', 'superadmin']);
+registerCrudRoutes('pagamentos', Pagamento, 'comercial', ['admin', 'superadmin']);
+registerCrudRoutes('nota-fiscal', NotaFiscal, 'comercial', ['admin', 'superadmin']);
+registerCrudRoutes('nota-fiscal-logs', NotaFiscalLog, 'comercial', ['admin', 'superadmin']);
 registerCrudRoutes('empresa-sequencias', EmpresaSequencia, 'superadmin');
 
 app.use(express.static(distDir));

@@ -13,6 +13,7 @@
     "start": "node server.js",
     "dev:api": "node server.js",
     "seed:validation": "node scripts/seed-validation-data.js --reset",
+    "seed:hospital": "node scripts/seed-hospital-erp.js",
     "smoke:api": "node scripts/smoke-validation-api.js",
     "test": "node --test lib/auth-token.test.js src/services/api.config.test.js",
     "build:github": "vite build --mode github",
