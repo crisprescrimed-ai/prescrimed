@@ -552,21 +552,65 @@ app.get('/api/auth/me', requireAuth, (req, res) => {
 
 app.post('/api/auth/register', async (req, res) => {
   try {
-    const { nome, email, senha, role = 'admin' } = req.body || {};
-    if (!nome || !email || !senha) {
+    const {
+      nome,
+      nomeAdmin,
+      nomeEmpresa,
+      tipoSistema,
+      cnpj,
+      email,
+      senha,
+      cpf,
+      contato,
+      role = 'admin',
+    } = req.body || {};
+    const userName = nomeAdmin || nome;
+    const isCompanyRegistration = Boolean(nomeEmpresa || nomeAdmin || tipoSistema || cnpj || cpf || contato);
+
+    if (!userName || !email || !senha) {
       return respondError(res, 400, 'Nome, email e senha são obrigatórios', null);
     }
 
-    const hashedPassword = bcrypt.hashSync(normalizePassword(senha), 10);
-    const created = await Usuario.create({
-      nome,
-      email,
-      senha: hashedPassword,
-      role,
-      ativo: true,
+    if (isCompanyRegistration && (!nomeEmpresa || !tipoSistema || !cnpj || !cpf || !contato)) {
+      return respondError(res, 400, 'Preencha os dados obrigatórios da empresa e do administrador', null);
+    }
+
+    const existingUser = await Usuario.findOne({ where: { email } });
+    if (existingUser) {
+      return respondError(res, 409, 'Já existe uma conta cadastrada com este e-mail', null);
+    }
+
+    if (isCompanyRegistration) {
+      const existingCompany = await Empresa.findOne({ where: { cnpj } });
+      if (existingCompany) {
+        return respondError(res, 409, 'Já existe uma empresa cadastrada com este CNPJ', null);
+      }
+    }
+
+    const created = await sequelize.transaction(async (transaction) => {
+      const empresa = isCompanyRegistration
+        ? await Empresa.create({
+          nome: nomeEmpresa,
+          tipoSistema,
+          cnpj,
+          email,
+          telefone: contato,
+          ativo: true,
+        }, { transaction })
+        : null;
+
+      return Usuario.create({
+        nome: userName,
+        email,
+        senha: bcrypt.hashSync(normalizePassword(senha), 10),
+        role,
+        contato,
+        empresaId: empresa?.id || null,
+        ativo: true,
+      }, { transaction });
     });
 
-    res.status(201).json({ user: { id: created.id, nome: created.nome, email: created.email, role: created.role } });
+    res.status(201).json({ user: toUserProfile(created) });
   } catch (error) {
     respondError(res, 500, 'Erro ao criar usuário', error.message);
   }

@@ -16,9 +16,11 @@ Base local: `http://localhost:3000`.
 | Metodo | Rota | Corpo | Resultado |
 | --- | --- | --- | --- |
 | `POST` | `/api/auth/login` | `{ "email", "senha" }` | Usuario e token local de desenvolvimento. |
-| `POST` | `/api/auth/register` | `{ "nome", "email", "senha", "role"? }` | Cria usuario com senha bcrypt. |
+| `POST` | `/api/auth/register` | Cadastro simples: `{ "nome", "email", "senha", "role"? }` | Cria usuario com senha bcrypt. |
+| `POST` | `/api/auth/register` | Cadastro da interface: `{ "nomeEmpresa", "tipoSistema", "cnpj", "nomeAdmin", "email", "senha", "cpf", "contato" }` | Cria empresa e usuario administrador vinculado. |
+| `GET` | `/api/auth/me` | Token Bearer | Retorna o perfil autenticado, incluindo `empresaId`. |
 
-`GET /api/auth/me` ainda nao esta implementada no servidor local. O frontend a utiliza para carregar o perfil depois do login; veja a limitacao no [README](../README.md#limitacao-conhecida).
+O cadastro bloqueia e-mail e CNPJ ja registrados com `409`.
 
 ## CRUD generico
 
