@@ -14,11 +14,6 @@ const authService = {
   login: loginWithBackend,
 
   logout: async () => {
-    try {
-      await post('/auth/logout');
-    } catch {
-      // A limpeza local deve funcionar mesmo se a sessao remota ja expirou.
-    }
     localStorage.removeItem('prescrimed_user');
     localStorage.removeItem('token');
     localStorage.removeItem('user');
