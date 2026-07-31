@@ -34,6 +34,13 @@ const distDir = path.resolve(__dirname, 'dist');
 const app = express();
 const authTokenSecret = process.env.AUTH_TOKEN_SECRET || 'local-development-secret';
 const authTokenLifetime = Number.parseInt(process.env.AUTH_TOKEN_TTL_SECONDS || '28800', 10);
+const sessionCookieOptions = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  path: '/',
+  maxAge: authTokenLifetime * 1000,
+};
 const allowedOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
   .split(',')
   .map((origin) => origin.trim())
@@ -48,6 +55,7 @@ if (process.env.NODE_ENV === 'production' && allowedOrigins.length === 0) {
 }
 
 app.use(cors({
+  credentials: true,
   origin(origin, callback) {
     const allowAllDevelopmentOrigins = process.env.NODE_ENV !== 'production' && allowedOrigins.length === 0;
     if (!origin || allowAllDevelopmentOrigins || allowedOrigins.includes(origin)) {
@@ -91,9 +99,14 @@ const toUserProfile = (user) => ({
 
 const requireAuth = async (req, res, next) => {
   const authorization = req.get('authorization') || '';
+  const cookieToken = (req.get('cookie') || '')
+    .split(';')
+    .map((value) => value.trim())
+    .find((value) => value.startsWith('prescrimed_session='))
+    ?.slice('prescrimed_session='.length);
   const token = authorization.startsWith('Bearer ')
     ? authorization.slice(7)
-    : req.get('x-prescrimed-token') || '';
+    : cookieToken || '';
   const payload = readAuthToken({ token, secret: authTokenSecret });
 
   if (!payload) {
@@ -535,17 +548,22 @@ app.post('/api/auth/login', async (req, res) => {
       return respondError(res, 401, 'Credenciais inválidas', null);
     }
 
-    res.json({
+    const token = createAuthToken({
+      userId: user.id,
+      secret: authTokenSecret,
+      expiresInSeconds: authTokenLifetime,
+    });
+    res.cookie('prescrimed_session', token, sessionCookieOptions).json({
       user: toUserProfile(user),
-      token: createAuthToken({
-        userId: user.id,
-        secret: authTokenSecret,
-        expiresInSeconds: authTokenLifetime,
-      }),
+      token,
     });
   } catch (error) {
     respondError(res, 500, 'Erro ao autenticar', error.message);
   }
+});
+
+app.post('/api/auth/logout', (_req, res) => {
+  res.clearCookie('prescrimed_session', sessionCookieOptions).status(204).end();
 });
 
 app.get('/api/auth/me', requireAuth, (req, res) => {
