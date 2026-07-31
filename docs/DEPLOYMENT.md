@@ -7,7 +7,7 @@ o build exige a variavel de repositorio `PRESCRIMED_API_URL` com uma URL HTTPS c
 terminando em `/api`, por exemplo `https://api.exemplo.com/api`. Configure tambem
 `PRESCRIMED_BACKEND_ROOT` com a mesma URL sem o sufixo `/api` para o health check.
 
-No host da API, configure `DATABASE_URL` com a conexao PostgreSQL do Supabase,
+No host da API, configure `DATABASE_URL` com a conexao PostgreSQL gerenciada,
 `PGSSLMODE=require`, `AUTH_TOKEN_SECRET` e
 `CORS_ALLOWED_ORIGINS=https://cristiano-superacao.github.io`.
 
@@ -40,7 +40,7 @@ No repositorio GitHub, cadastre as variaveis `PRESCRIMED_API_URL` e `PRESCRIMED_
 - headers de seguranca basicos;
 - fallback SPA para `index.html`.
 
-Defina no painel da Netlify as mesmas variaveis `VITE_API_URL`, `VITE_BACKEND_ROOT` e, se necessario, as variaveis Supabase. Essas variaveis sao incorporadas na build; uma alteracao exige novo deploy.
+Defina no painel da Netlify as variaveis `VITE_API_URL` e `VITE_BACKEND_ROOT`. Essas variaveis sao incorporadas na build; uma alteracao exige novo deploy.
 
 ## Servidor Node com API
 

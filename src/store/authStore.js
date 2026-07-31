@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { supabaseClient } from '../lib/supabase';
 import { get } from '../services/request';
 import authService from '../services/auth.service';
 
@@ -39,74 +38,22 @@ const restoreLegacySession = async (set) => {
 export const useAuthStore = create((set) => ({
   user: null,
   isAuthenticated: false,
-  /** true enquanto a sessão do Supabase está sendo verificada no carregamento inicial */
+  /** true enquanto a sessao persistida esta sendo validada no carregamento inicial */
   loading: true,
 
-  /**
-   * Deve ser chamado UMA vez na inicialização da aplicação (main.jsx).
-   * Restaura a sessão existente do Supabase e registra o listener de mudanças.
-   */
   initialize: async () => {
-    if (!supabaseClient) {
+    if (localStorage.getItem('token')) {
       await restoreLegacySession(set);
       return;
     }
-
-    try {
-      const { data: { session } } = await supabaseClient.auth.getSession();
-      if (session) {
-        const user = await fetchProfile();
-        if (user) {
-          persistUser(user);
-          set({ user, isAuthenticated: true, loading: false });
-        } else {
-          await supabaseClient.auth.signOut();
-          set({ loading: false });
-        }
-      } else {
-        const legacyToken = localStorage.getItem('token');
-        if (legacyToken) {
-          await restoreLegacySession(set);
-        } else {
-          set({ loading: false });
-        }
-      }
-    } catch {
-      const legacyToken = localStorage.getItem('token');
-      if (legacyToken) {
-        await restoreLegacySession(set);
-      } else {
-        set({ loading: false });
-      }
-    }
-
-    // Listener de mudanças de sessão (token refresh, logout em outra aba, etc.)
-    supabaseClient.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session) {
-        const user = await fetchProfile();
-        if (user) {
-          persistUser(user);
-          set({ user, isAuthenticated: true, loading: false });
-        }
-      } else if (event === 'TOKEN_REFRESHED' && session) {
-        // Token renovado automaticamente — apenas atualiza loading se necessário
-        set({ loading: false });
-      } else if (event === 'SIGNED_OUT') {
-        persistUser(null);
-        set({ user: null, isAuthenticated: false, loading: false });
-      }
-    });
+    set({ loading: false });
   },
 
   login: async (email, senha) => {
-    // Tenta Supabase Auth primeiro e recua para o JWT legado do backend quando necessário.
     await authService.login(email, senha);
 
-    // Busca o perfil completo do backend (com empresaId, role, permissoes)
     const user = await fetchProfile();
     if (!user) {
-      // Sessão criada no Supabase mas usuário não existe na aplicação
-      await supabaseClient?.auth.signOut();
       throw Object.assign(new Error('Usuário não encontrado no sistema.'), {
         response: {
           status: 403,

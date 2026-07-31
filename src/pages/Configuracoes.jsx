@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Save, Building, Lock, Bell, User, Database, Link2, Copy, RefreshCw, Trash2 } from 'lucide-react';
+import { Save, Building, Lock, Bell, User } from 'lucide-react';
 import { useAuthStore } from '../store/authStore';
 import usuarioService from '../services/usuario.service';
 import empresaService from '../services/empresa.service';
@@ -7,17 +7,6 @@ import toast from 'react-hot-toast';
 import { successMessage, customErrorMessage } from '../utils/toastMessages';
 import { handleApiError } from '../utils/errorHandler';
 import PageHeader from '../components/common/PageHeader';
-import {
-  clearSupabaseRuntimeConfig,
-  getSupabaseAnonKey,
-  getSupabaseConfigSource,
-  getSupabaseConfigStatus,
-  getSupabaseProjectRef,
-  getSupabaseRuntimeConfig,
-  getSupabaseUrl,
-  saveSupabaseRuntimeConfig,
-  validateSupabaseConnection,
-} from '../lib/supabase';
 
 export default function Configuracoes() {
   const { user } = useAuthStore();
@@ -27,18 +16,6 @@ export default function Configuracoes() {
   const [perfilSaving, setPerfilSaving] = useState(false);
   const [empresaSaving, setEmpresaSaving] = useState(false);
   const [senhaSaving, setSenhaSaving] = useState(false);
-  const [supabaseStatus, setSupabaseStatus] = useState(() => getSupabaseConfigStatus());
-  const [supabaseUrl, setSupabaseUrl] = useState(() => getSupabaseUrl());
-  const [supabaseProjectRef, setSupabaseProjectRef] = useState(() => getSupabaseProjectRef());
-  const [supabaseConfigSource, setSupabaseConfigSource] = useState(() => getSupabaseConfigSource());
-  const [supabaseRuntimeConfig, setSupabaseRuntimeConfig] = useState(() => getSupabaseRuntimeConfig());
-  const [supabaseForm, setSupabaseForm] = useState(() => ({
-    url: getSupabaseRuntimeConfig().url || getSupabaseUrl(),
-    anonKey: getSupabaseRuntimeConfig().anonKey || getSupabaseAnonKey(),
-  }));
-  const [supabaseSaving, setSupabaseSaving] = useState(false);
-  const [supabaseTesting, setSupabaseTesting] = useState(false);
-  const [supabaseConnectionResult, setSupabaseConnectionResult] = useState(null);
   const [formData, setFormData] = useState({
     nome: user?.nome || '',
     email: user?.email || '',
@@ -66,23 +43,6 @@ export default function Configuracoes() {
       crmUf: user?.crmUf || '',
     });
   }, [user]);
-
-  const syncSupabaseState = useCallback(() => {
-    const runtimeConfig = getSupabaseRuntimeConfig();
-    setSupabaseRuntimeConfig(runtimeConfig);
-    setSupabaseStatus(getSupabaseConfigStatus());
-    setSupabaseUrl(getSupabaseUrl());
-    setSupabaseProjectRef(getSupabaseProjectRef());
-    setSupabaseConfigSource(getSupabaseConfigSource());
-    setSupabaseForm({
-      url: runtimeConfig.url || getSupabaseUrl(),
-      anonKey: runtimeConfig.anonKey || getSupabaseAnonKey(),
-    });
-  }, []);
-
-  useEffect(() => {
-    syncSupabaseState();
-  }, [syncSupabaseState]);
 
   const loadSummary = useCallback(async () => {
     setSummaryLoading(true);
@@ -204,8 +164,7 @@ export default function Configuracoes() {
     { id: 'perfil', nome: 'Perfil', icon: User },
     { id: 'empresa', nome: 'Empresa', icon: Building },
     { id: 'seguranca', nome: 'Segurança', icon: Lock },
-    { id: 'notificacoes', nome: 'Notificações', icon: Bell },
-    { id: 'integracoes', nome: 'Integrações', icon: Database }
+    { id: 'notificacoes', nome: 'Notificações', icon: Bell }
   ];
 
   const lastProfileUpdate = summary?.lastUpdate
@@ -215,85 +174,6 @@ export default function Configuracoes() {
   const securityScore = summary?.securityScore
     ? Math.round(summary.securityScore * 100)
     : 0;
-
-  const supabaseStatusMeta = {
-    ready: {
-      label: 'Pronto para uso no frontend',
-      badge: 'bg-emerald-100 text-emerald-700 border-emerald-200',
-      description: 'URL e anon key foram carregadas no build atual. O cliente já pode consumir tabelas, auth ou storage conforme as políticas do projeto.',
-    },
-    partial: {
-      label: 'Configuração parcial',
-      badge: 'bg-amber-100 text-amber-700 border-amber-200',
-      description: 'A URL do projeto está preenchida, mas a anon key ainda precisa ser definida para habilitar chamadas reais pelo SDK no navegador.',
-    },
-    missing: {
-      label: 'Não configurado',
-      badge: 'bg-slate-100 text-slate-700 border-slate-200',
-      description: 'O frontend ainda não recebeu as variáveis necessárias do Supabase.',
-    },
-  };
-
-  const currentSupabaseMeta = supabaseStatusMeta[supabaseStatus] || supabaseStatusMeta.missing;
-
-  const supabaseSourceLabel = {
-    runtime: 'Configuração local do navegador',
-    build: 'Variáveis do build atual',
-    none: 'Nenhuma origem ativa',
-  };
-
-  const handleCopySupabaseEnv = async () => {
-    const block = [
-      `VITE_SUPABASE_URL=${supabaseUrl || 'https://bytfmgzozogdacsajllh.supabase.co'}`,
-      'VITE_SUPABASE_ANON_KEY=<cole-aqui-a-anon-key-publica>',
-    ].join('\n');
-
-    try {
-      await navigator.clipboard.writeText(block);
-      toast.success('Bloco de variáveis do Supabase copiado.');
-    } catch {
-      toast.error('Não foi possível copiar automaticamente.');
-    }
-  };
-
-  const handleSaveSupabaseRuntimeConfig = async (event) => {
-    event.preventDefault();
-    setSupabaseSaving(true);
-
-    try {
-      saveSupabaseRuntimeConfig(supabaseForm);
-      syncSupabaseState();
-      setSupabaseConnectionResult(null);
-      toast.success('Configuração local do Supabase salva neste navegador.');
-    } catch {
-      toast.error('Não foi possível salvar a configuração local.');
-    } finally {
-      setSupabaseSaving(false);
-    }
-  };
-
-  const handleClearSupabaseRuntimeConfig = () => {
-    clearSupabaseRuntimeConfig();
-    syncSupabaseState();
-    setSupabaseConnectionResult(null);
-    toast.success('Configuração local removida.');
-  };
-
-  const handleTestSupabaseConnection = async () => {
-    setSupabaseTesting(true);
-
-    const result = await validateSupabaseConnection(supabaseForm);
-
-    setSupabaseConnectionResult(result);
-
-    if (result.ok) {
-      toast.success(result.message);
-    } else {
-      toast.error(result.message);
-    }
-
-    setSupabaseTesting(false);
-  };
 
   return (
     <div className="space-y-8">
@@ -337,11 +217,6 @@ export default function Configuracoes() {
           <p className="text-xs text-slate-500 mt-1">
             {summary?.planDescription || 'Suporte prioritário e integrações liberadas.'}
           </p>
-        </div>
-        <div className="card md:col-span-3 lg:col-span-1">
-          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Supabase</p>
-          <p className="text-xl font-semibold text-slate-900 mt-2">{currentSupabaseMeta.label}</p>
-          <p className="text-xs text-slate-500 mt-1">{supabaseProjectRef || 'project-ref pendente'} • frontend</p>
         </div>
       </div>
 
@@ -597,166 +472,6 @@ export default function Configuracoes() {
         </div>
       )}
 
-      {activeTab === 'integracoes' && (
-        <div className="card space-y-6">
-          <div className="border-b border-slate-100 pb-4">
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-1">Integrações</p>
-            <h2 className="text-xl font-semibold text-slate-900">Supabase no Frontend</h2>
-            <p className="text-sm text-slate-500 mt-2">
-              O backend continua operando com PostgreSQL via Sequelize. Esta área prepara o React para usar o SDK do Supabase quando você definir a anon key pública do projeto.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 lg:col-span-2">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
-                <div>
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Status</p>
-                  <p className="text-lg font-semibold text-slate-900 mt-2">{currentSupabaseMeta.label}</p>
-                </div>
-                <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${currentSupabaseMeta.badge}`}>
-                  {supabaseStatus}
-                </span>
-              </div>
-              <p className="text-sm text-slate-600 mt-3">{currentSupabaseMeta.description}</p>
-
-              <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                <div className="rounded-xl bg-white border border-slate-200 p-3">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Projeto</p>
-                  <p className="font-medium text-slate-900 break-all">{supabaseProjectRef || 'Não identificado'}</p>
-                </div>
-                <div className="rounded-xl bg-white border border-slate-200 p-3">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">URL</p>
-                  <p className="font-medium text-slate-900 break-all">{supabaseUrl || 'Não definida'}</p>
-                </div>
-                <div className="rounded-xl bg-white border border-slate-200 p-3 md:col-span-2">
-                  <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Origem ativa</p>
-                  <p className="font-medium text-slate-900">{supabaseSourceLabel[supabaseConfigSource] || supabaseSourceLabel.none}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-              <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Próxima ação</p>
-              <p className="text-sm text-slate-600 mt-3">
-                Você pode usar o build atual ou salvar uma configuração local neste navegador para testar o SDK sem novo deploy.
-              </p>
-              <button
-                type="button"
-                onClick={handleCopySupabaseEnv}
-                className="btn btn-primary flex items-center gap-2 mt-4"
-              >
-                <Copy size={16} />
-                Copiar bloco .env
-              </button>
-            </div>
-          </div>
-
-          <form onSubmit={handleSaveSupabaseRuntimeConfig} className="grid grid-cols-1 xl:grid-cols-[1.2fr,1fr] gap-4">
-            <div className="rounded-2xl border border-slate-200 bg-white p-5 space-y-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-1">Configuração Runtime</p>
-                <h3 className="text-lg font-semibold text-slate-900">Ativar neste navegador</h3>
-                <p className="text-sm text-slate-500 mt-2">
-                  Salve a URL e a anon key pública localmente para usar o Supabase agora, sem alterar o backend nem depender de novo commit.
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-600 mb-2">URL do projeto</label>
-                <input
-                  type="url"
-                  className="input"
-                  value={supabaseForm.url}
-                  onChange={(event) => setSupabaseForm((current) => ({ ...current, url: event.target.value }))}
-                  placeholder="https://seu-projeto.supabase.co"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-600 mb-2">Anon key pública</label>
-                <textarea
-                  className="input min-h-[132px] resize-y"
-                  value={supabaseForm.anonKey}
-                  onChange={(event) => setSupabaseForm((current) => ({ ...current, anonKey: event.target.value }))}
-                  placeholder="Cole aqui a chave pública do frontend"
-                />
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <button
-                  type="submit"
-                  className="btn btn-primary flex items-center gap-2 disabled:opacity-60"
-                  disabled={supabaseSaving}
-                >
-                  <Save size={16} />
-                  {supabaseSaving ? 'Salvando...' : 'Salvar neste navegador'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleTestSupabaseConnection}
-                  className="btn btn-secondary flex items-center gap-2 disabled:opacity-60"
-                  disabled={supabaseTesting}
-                >
-                  <RefreshCw size={16} className={supabaseTesting ? 'animate-spin' : ''} />
-                  {supabaseTesting ? 'Validando...' : 'Testar conexão'}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={handleClearSupabaseRuntimeConfig}
-                  className="btn btn-secondary flex items-center gap-2"
-                >
-                  <Trash2 size={16} />
-                  Limpar configuração local
-                </button>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5 space-y-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-1">Diagnóstico</p>
-                <h3 className="text-lg font-semibold text-slate-900">Estado atual da integração</h3>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Override local</p>
-                <p className="text-sm font-medium text-slate-900">
-                  {supabaseRuntimeConfig.url || supabaseRuntimeConfig.anonKey ? 'Ativo neste navegador' : 'Não configurado'}
-                </p>
-              </div>
-
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
-                <p className="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Teste de conexão</p>
-                <p className="text-sm text-slate-700">
-                  {supabaseConnectionResult
-                    ? supabaseConnectionResult.message
-                    : 'Execute o teste para validar URL e anon key antes de usar tabelas, auth ou storage.'}
-                </p>
-                {supabaseConnectionResult?.status ? (
-                  <p className="text-xs text-slate-500 mt-2">Status HTTP: {supabaseConnectionResult.status}</p>
-                ) : null}
-              </div>
-
-              <div className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600">
-                A chave salva aqui fica apenas no navegador atual. Para produção permanente, continue usando as variáveis de ambiente do frontend.
-              </div>
-            </div>
-          </form>
-
-          <div className="rounded-2xl border border-slate-200 bg-slate-950 text-slate-100 p-5">
-            <div className="flex items-center gap-2 text-sm font-semibold">
-              <Link2 size={16} />
-              Variáveis esperadas no frontend
-            </div>
-            <pre className="mt-4 overflow-x-auto text-xs leading-6 whitespace-pre-wrap">
-{`VITE_SUPABASE_URL=${supabaseUrl || 'https://bytfmgzozogdacsajllh.supabase.co'}
-VITE_SUPABASE_ANON_KEY=<cole-aqui-a-anon-key-publica>`}
-            </pre>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

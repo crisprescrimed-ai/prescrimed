@@ -5,7 +5,7 @@ import ErrorBoundary from './components/ErrorBoundary.jsx'
 import { useAuthStore } from './store/authStore.js'
 import './index.css'
 
-// Inicializa a sessão Supabase antes de renderizar (evita flash de /login em usuários autenticados)
+// Valida a sessao persistida antes de renderizar as rotas protegidas.
 useAuthStore.getState().initialize();
 
 ReactDOM.createRoot(document.getElementById('root')).render(

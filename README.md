@@ -7,7 +7,7 @@ Aplicacao para gestao de prescricoes, residentes, agenda, estoque, financeiro e 
 - Frontend: React 18, Vite, Tailwind CSS e React Router com hash routing.
 - Backend: Express 5 com rotas REST e Sequelize.
 - Dados: SQLite local por padrao e PostgreSQL quando `DATABASE_URL` esta configurada.
-- Autenticacao: Supabase opcional, com fallback para a API local.
+- Autenticacao: tokens HMAC emitidos e validados pela API Express.
 - Publicacao: GitHub Pages para frontend estatico, Netlify para SPA e servidor Node para frontend mais API.
 
 ## Inicio rapido
@@ -62,6 +62,6 @@ npm run build:github
 
 O workflow de GitHub Pages executa essa build ao receber alteracoes em `main`.
 
-## Limitacao conhecida
+## Autenticacao
 
-O fluxo de login do frontend solicita `GET /api/auth/me` apos autenticar. A API local atual implementa `POST /api/auth/login` e `POST /api/auth/register`, mas ainda nao implementa `GET /api/auth/me`. Para login completo, configure Supabase com um perfil correspondente no backend ou implemente essa rota antes de depender do fallback local em producao.
+O frontend autentica em `POST /api/auth/login`, armazena o token de sessao localmente e recupera o perfil e as permissoes em `GET /api/auth/me`. O backend protege as rotas da aplicacao e deve receber `AUTH_TOKEN_SECRET` em producao.

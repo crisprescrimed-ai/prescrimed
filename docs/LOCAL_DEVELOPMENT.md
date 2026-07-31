@@ -41,8 +41,6 @@ Use `.env.example` como referencia. Variaveis do frontend precisam do prefixo `V
 | `VITE_API_URL` | URL base da API. Localmente, use `/api`. |
 | `LOCAL_BACKEND_URL` | Destino do proxy Vite. O padrao e `http://localhost:3000`. |
 | `VITE_BACKEND_ROOT` | Raiz da API para health check em dominio separado. |
-| `VITE_SUPABASE_URL` | URL do projeto Supabase, se utilizado. |
-| `VITE_SUPABASE_ANON_KEY` | Chave anon publica do Supabase, se utilizado. |
 | `DATABASE_URL` | Conexao PostgreSQL do backend. |
 | `FORCE_SQLITE` | Use `true` para ignorar `DATABASE_URL` e usar SQLite. |
 | `SQLITE_STORAGE` | Caminho do arquivo SQLite. Padrao: `tmp/dev.sqlite`. |
@@ -72,4 +70,4 @@ O schema e sincronizado quando `server.js` inicia. Os scripts de seed ficam em `
 
 - Health check falha: confirme que `npm run dev:api` esta rodando na porta 3000.
 - O frontend nao encontra a API: mantenha `VITE_API_URL=/api` e `LOCAL_BACKEND_URL=http://localhost:3000` no desenvolvimento.
-- Login local retorna ao login: consulte a limitacao de `/api/auth/me` no [README](../README.md#limitacao-conhecida).
+- Login local retorna ao login: confirme que a API responde em `GET /api/auth/me` apos o login e que o token local nao expirou.

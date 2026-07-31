@@ -11,14 +11,13 @@
     "dev:api": "node server.js",
     "seed:validation": "node scripts/seed-validation-data.js --reset",
     "smoke:api": "node scripts/smoke-validation-api.js",
-    "test": "node --test lib/auth-token.test.js src/services/api.config.test.js src/services/auth.helpers.test.js",
+    "test": "node --test lib/auth-token.test.js src/services/api.config.test.js",
     "build:github": "vite build --mode github",
     "build:railway": "vite build --mode railway",
     "start:railway": "vite preview --host 0.0.0.0 --port ${PORT:-3000}",
     "lint": "echo 'Linting skipped'"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.104.0",
     "axios": "^1.15.2",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",

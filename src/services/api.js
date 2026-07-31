@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { supabaseClient } from '../lib/supabase';
 import { getSelectedEmpresaId } from '../utils/empresaContext';
 import { resolveApiRootUrl, resolveApiUrl } from './api.config';
 
@@ -58,26 +57,10 @@ const api = axios.create({
   },
 });
 
-// Interceptor para adicionar token nas requisições
-// Usa Supabase access_token (primário) ou token legado do localStorage (fallback)
+// Interceptor para adicionar o token de sessao do backend nas requisicoes.
 api.interceptors.request.use(
   async (config) => {
-    let token = null;
-
-    // 1. Tenta obter o token da sessão Supabase
-    if (supabaseClient) {
-      try {
-        const { data: { session } } = await supabaseClient.auth.getSession();
-        token = session?.access_token || null;
-      } catch {
-        // ignora falha ao obter sessão
-      }
-    }
-
-    // 2. Fallback: token legado armazenado manualmente
-    if (!token) {
-      token = localStorage.getItem('token');
-    }
+    const token = localStorage.getItem('token');
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -131,7 +114,7 @@ api.interceptors.response.use(
       });
     }
 
-    // Se o token expirou, tenta renovar via Supabase (auto-refresh) ou redireciona para login
+    // Token invalido: encerra a sessao local e redireciona para login.
     if (error.response?.status === 401 && !originalRequest._retry) {
       // Não tenta renovar em rotas de autenticação
       if (originalRequest.url?.includes('/auth/login') || originalRequest.url?.includes('/auth/me')) {
@@ -144,44 +127,13 @@ api.interceptors.response.use(
         return Promise.reject({ message: 'Sessão expirada. Faça login novamente.' });
       }
 
-      originalRequest._retry = true;
-
-      try {
-        // O Supabase renova o token automaticamente (autoRefreshToken: true).
-        // Basta obter a sessão atual para ter o token atualizado.
-        let newToken = null;
-        if (supabaseClient) {
-          const { data: { session } } = await supabaseClient.auth.getSession();
-          newToken = session?.access_token || null;
-        }
-
-        if (newToken) {
-          originalRequest.headers.Authorization = `Bearer ${newToken}`;
-          return api(originalRequest);
-        }
-
-        // Se não há sessão válida, redireciona para login
-        if (supabaseClient) await supabaseClient.auth.signOut();
-        localStorage.removeItem('prescrimed_user');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        if (window && window.location && !window.location.hash.includes('#/login')) {
-          window.location.hash = '#/login';
-        }
-        return Promise.reject({ message: 'Sessão expirada. Faça login novamente.' });
-      } catch (refreshError) {
-        console.error('🔴 Falha ao renovar sessão:', refreshError);
-        localStorage.removeItem('prescrimed_user');
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        if (window && window.location && !window.location.hash.includes('#/login')) {
-          window.location.hash = '#/login';
-        }
-        return Promise.reject({ 
-          message: 'Sessão expirada. Faça login novamente.',
-          originalError: refreshError 
-        });
+      localStorage.removeItem('prescrimed_user');
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      if (window && window.location && !window.location.hash.includes('#/login')) {
+        window.location.hash = '#/login';
       }
+      return Promise.reject({ message: 'Sessão expirada. Faça login novamente.' });
     }
 
     // Log detalhado de erros

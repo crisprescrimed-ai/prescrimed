@@ -26,7 +26,7 @@ import { useAuthStore } from '../store/authStore';
 const ProtectedRoute = ({ children, requiredPermission }) => {
   const { isAuthenticated, hasPermission, loading } = useAuthStore();
 
-  // Enquanto a sessão do Supabase está sendo verificada, exibe spinner
+  // Enquanto a sessao persistida esta sendo verificada, exibe spinner
   // (evita flash de redirect para /login em usuários já autenticados)
   if (loading) {
     return (

@@ -2,14 +2,12 @@ import { useEffect, useState } from 'react';
 import { AlertCircle, WifiOff } from 'lucide-react';
 import { getApiRootUrl } from '../services/api';
 import { shouldMonitorBackend } from '../services/api.config';
-import { getSupabaseConfigStatus } from '../lib/supabase';
 
 export default function BackendStatusMonitor() {
   const [status, setStatus] = useState('online'); // online | degraded | offline
   const [showAlert, setShowAlert] = useState(false);
   const [lastCheck, setLastCheck] = useState(null);
   const [dbStatus, setDbStatus] = useState(null);
-  const [supabaseStatus] = useState(() => getSupabaseConfigStatus());
   const monitorBackend = shouldMonitorBackend({
     isDevelopment: import.meta.env.DEV,
     explicitApiUrl: import.meta.env.VITE_API_URL,
@@ -250,12 +248,6 @@ export default function BackendStatusMonitor() {
     if (!root) return '/api/health';
     return root.replace(/\/+$/, '') + '/api/health';
   })();
-  const supabaseStatusLabel = supabaseStatus === 'ready'
-    ? 'Cliente Supabase configurado'
-    : supabaseStatus === 'partial'
-      ? 'Cliente Supabase incompleto'
-      : 'Cliente Supabase não configurado';
-
   const barClass = isOffline ? 'bg-red-600' : 'bg-amber-500';
   const barSubClass = isOffline ? 'bg-red-700' : 'bg-amber-600';
 
@@ -279,9 +271,6 @@ export default function BackendStatusMonitor() {
                   Status do banco: <span className="font-semibold">{dbStatus}</span>
                 </p>
               ) : null}
-              <p className="text-xs opacity-90 mt-1">
-                {supabaseStatusLabel}
-              </p>
             </div>
           </div>
           
@@ -316,10 +305,6 @@ export default function BackendStatusMonitor() {
             ) : (
               <>Confirme se o PostgreSQL está acessível e se <code className="bg-black/20 px-2 py-1 rounded text-xs">DATABASE_URL</code> ou <code className="bg-black/20 px-2 py-1 rounded text-xs">PGHOST</code> estão configuradas. Enquanto isso, o sistema pode ficar parcialmente indisponível.</>
             )}
-            {' '}
-            {supabaseStatus !== 'ready' ? (
-              <>Para usar o SDK no frontend, preencha <code className="bg-black/20 px-2 py-1 rounded text-xs">VITE_SUPABASE_URL</code> e <code className="bg-black/20 px-2 py-1 rounded text-xs">VITE_SUPABASE_ANON_KEY</code>.</>
-            ) : null}
           </p>
         </div>
       </div>

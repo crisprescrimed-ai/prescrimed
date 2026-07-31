@@ -8,7 +8,6 @@ flowchart LR
   Web -->|/api e token| Api[Express]
   Api --> Orm[Sequelize]
   Orm --> Db[(SQLite local ou PostgreSQL)]
-  Web -->|opcional| Supabase[Supabase Auth]
 ```
 
 O frontend e uma SPA. `HashRouter` usa URLs como `/#/login`, o que evita depender de regras de reescrita no GitHub Pages. A interface usa Tailwind CSS, componentes React e icones Lucide.
@@ -23,7 +22,6 @@ O frontend e uma SPA. `HashRouter` usa URLs como `/#/login`, o que evita depende
 | `src/components/` | Layout, sidebar, modais, protecao de rotas e componentes reutilizaveis. |
 | `src/services/` | Cliente Axios, configuracao de API e servicos de dominio. |
 | `src/store/authStore.js` | Estado de autenticacao com Zustand. |
-| `src/lib/supabase.js` | Cliente e configuracao opcional do Supabase. |
 | `models/index.js` | Modelos Sequelize e selecao SQLite/PostgreSQL. |
 | `server.js` | API Express, health checks, CRUD e entrega da build. |
 | `docs/` | Guias de operacao e manutencao. |
@@ -34,11 +32,11 @@ As rotas publicas sao `/login` e `/register`. As demais rotas passam por `Protec
 
 Rotas de negocio incluem dashboard, agenda, cronograma, censo, prescricoes, residentes, estoque, evolucao, financeiro, comercial, usuarios, empresas, backups, configuracoes e manual. A rota historica `/pacientes` redireciona para `/residentes`.
 
-`src/services/api.js` configura o Axios com `VITE_API_URL`. O interceptor prioriza o token da sessao Supabase e usa o token salvo no navegador como fallback. Para superadministradores, ele tambem envia `X-Empresa-Id` quando existe uma empresa selecionada.
+`src/services/api.js` configura o Axios com `VITE_API_URL`, adiciona o token de sessao do backend e envia `X-Empresa-Id` para superadministradores quando existe uma empresa selecionada.
 
 ## Autenticacao e autorizacao
 
-O estado global fica em `authStore`. Ele tenta restaurar uma sessao Supabase e, se nao houver cliente configurado, tenta restaurar a sessao legada pelo backend. O perfil persistido usa a chave `prescrimed_user` no `localStorage`.
+O estado global fica em `authStore`. Ele restaura o token de sessao do backend e carrega o perfil persistido na chave `prescrimed_user` do `localStorage`.
 
 `admin` e `superadmin` possuem acesso a todos os modulos. Outros perfis dependem da lista `user.permissoes`.
 
