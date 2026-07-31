@@ -2,6 +2,15 @@
 
 ## GitHub Pages
 
+O GitHub Pages serve somente os arquivos estaticos. Ele nao executa `server.js`, portanto
+o build exige a variavel de repositorio `PRESCRIMED_API_URL` com uma URL HTTPS completa
+terminando em `/api`, por exemplo `https://api.exemplo.com/api`. Configure tambem
+`PRESCRIMED_BACKEND_ROOT` com a mesma URL sem o sufixo `/api` para o health check.
+
+No host da API, configure `DATABASE_URL` com a conexao PostgreSQL do Supabase,
+`PGSSLMODE=require`, `AUTH_TOKEN_SECRET` e
+`CORS_ALLOWED_ORIGINS=https://cristiano-superacao.github.io`.
+
 O workflow `.github/workflows/deploy-gh-pages.yml` publica automaticamente quando `main` recebe alteracoes.
 
 Ele executa:
@@ -18,7 +27,7 @@ VITE_API_URL=https://api.exemplo.com/api
 VITE_BACKEND_ROOT=https://api.exemplo.com
 ```
 
-No repositorio GitHub, cadastre as variaveis `PRESCRIMED_API_URL` e `PRESCRIMED_BACKEND_ROOT` em **Settings > Secrets and variables > Actions > Variables**. O workflow as injeta na build de Pages. A API externa deve definir `CORS_ALLOWED_ORIGINS=https://cristiano-superacao.github.io` e um `AUTH_TOKEN_SECRET` forte. Sem essas variaveis, o monitor de backend fica desativado na hospedagem estatica para evitar alertas falsos.
+No repositorio GitHub, cadastre as variaveis `PRESCRIMED_API_URL` e `PRESCRIMED_BACKEND_ROOT` em **Settings > Secrets and variables > Actions > Variables**. O workflow as injeta na build de Pages. A API externa deve definir `CORS_ALLOWED_ORIGINS=https://cristiano-superacao.github.io` e um `AUTH_TOKEN_SECRET` forte. Sem `PRESCRIMED_API_URL`, o workflow falha antes de publicar, evitando uma versao com chamadas `/api` que retornariam 404 no GitHub Pages.
 
 ## Netlify
 

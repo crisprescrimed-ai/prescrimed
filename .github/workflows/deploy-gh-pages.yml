@@ -27,6 +27,22 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm ci
+      - name: Validate external API configuration
+        env:
+          PRESCRIMED_API_URL: ${{ vars.PRESCRIMED_API_URL }}
+        run: |
+          if [ -z "$PRESCRIMED_API_URL" ]; then
+            echo "PRESCRIMED_API_URL não está definida. GitHub Pages precisa de uma API HTTPS externa."
+            exit 1
+          fi
+          case "$PRESCRIMED_API_URL" in
+            https://*/api|https://*/api/)
+              ;;
+            *)
+              echo "PRESCRIMED_API_URL deve ser uma URL HTTPS terminando em /api."
+              exit 1
+              ;;
+          esac
       - run: npm run build:github
         env:
           VITE_API_URL: ${{ vars.PRESCRIMED_API_URL }}
